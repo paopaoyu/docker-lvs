@@ -1,0 +1,44 @@
+lvs1:
+  build: lvs/.
+  privileged: true
+  environment: 
+    DOCKER_HOST: unix:///tmp/docker.sock
+    LVS_TYPE: MASTER
+    LVS_PRI: 100
+    LVS_VIP: 172.17.0.8
+  volumes:
+    - /var/run/docker.sock:/tmp/docker.sock
+    - /lib/modules:/lib/modules
+
+lvs2:
+  build: lvs/.
+  privileged: true
+  environment:
+    DOCKER_HOST: unix:///tmp/docker.sock
+    LVS_TYPE: BACKUP
+    LVS_PRI: 90
+    LVS_VIP: 172.17.0.8
+  volumes:
+    - /var/run/docker.sock:/tmp/docker.sock
+    - /lib/modules:/lib/modules
+
+web1:
+  build: httpd/.
+  links:
+    - lvs1
+    - lvs2
+  privileged: true
+  environment:
+    lvs: 1
+    weight: 1
+
+web2:
+  build: httpd/.
+  links:
+    - lvs1
+    - lvs2
+  privileged: true
+  environment:
+    lvs: 1
+    weight: 3
+
